@@ -1,0 +1,81 @@
+---
+title: "Assignment 4"
+author: "Kyle Pinca"
+date: "11/9/2021"
+output: html_document
+
+## 1
+```{r}
+House=read.csv("kc house sales.csv")
+House$date=as.Date(House$date,format="%Y%m%d")
+House$view=as.factor(House$view)
+House$waterfront=as.factor(House$waterfront)
+House$zipcode=as.factor(House$zipcode)
+House[15871,3]=3
+attach(House)
+```
+
+## 2
+```{r}
+
+glm.fit=glm(log(price)~.-sqft_basement, House, family=gaussian)
+```
+
+## 3
+```{r}
+library(boot)
+set.seed(100)
+cv.err=cv.glm(House, glm.fit)
+names(cv.err)
+cv.err$delta
+
+cv.error=rep(0,10)
+for(i in 1:10){
+glm.fit=glm(log(price)~poly(.-sqft_basement,i))
+cv.error[i]=cv.glm(House, glm.fit)$delta[1]
+}
+cv.error
+```
+
+
+## 4
+```{r}
+house.fit=glm(log(price)~(.-sqft_basement-zipcode)^2+zipcode, House, family=gaussian)
+```
+
+## 5
+```{r}
+set.seed(100)
+cv.err=cv.glm(House, house.fit)
+names(cv.err)
+cv.err$delta
+
+cv.error=rep(0,10)
+for(i in 1:10){
+glm.fit2=glm(log(price)~poly(.-sqft_basement,i))
+cv.error2[i]=cv.glm(House, glm.fit)$delta[1]
+}
+cv.error
+```
+
+## 6
+```{r}
+
+```
+
+## 7
+```{r}
+Bank = read.csv("bank marketing.csv")
+Bank$y=as.factor(Bank$y)
+attach(Bank)
+```
+
+## 8
+```{r}
+bank.fit = glm(y~. -duration,Bank,family=gaussian)
+
+```
+## 9
+```{r}
+
+```

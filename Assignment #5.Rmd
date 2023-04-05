@@ -1,0 +1,138 @@
+---
+title: 'Assignment #5'
+author: "Kyle Pinca"
+date: "11/17/2021"
+output: html_document
+---
+
+## 1
+```{r}
+House=read.csv("kc house sales.csv")
+House$date=as.Date(House$date,format="%Y%m%d")
+House$view=as.factor(House$view)
+House$waterfront=as.factor(House$waterfront)
+House$zipcode=as.factor(House$zipcode)
+House[15871,3]=3
+attach(House)
+```
+
+## 2
+
+```{r}
+library(ISLR2)
+library(leaps)
+fwd.fit=regsubsets(log(price)~(.-sqft_basement-zipcode)^2+zipcode, data=House,nvmax=11, method="forward")
+names(fwd.sum)
+fwd.sum=summary(fwd.fit)
+
+fwd.sum$cp
+
+
+'It seems that all 12 variables are needed in order to find the best combenation'
+```
+```{r}
+plot(fwd.sum$bic,type="b")
+minbic=which.min(fwd.sum$bic)
+points(minbic,fwd.sum$bic[minbic],pch=4,cex=2,col=2)
+```
+## 3
+```{r}
+bwd.fit=regsubsets(log(price)~(.-sqft_basement-zipcode)^2+zipcode, data=House, method="backward")
+
+bwd.sum=summary(bwd.fit)
+names(bwd.sum)
+
+bwd.sum$cp
+```
+
+
+
+```{r}
+```
+```{r}
+plot(bwd.sum$bic,type="b")
+minbic=which.min(bwd.sum$bic)
+points(minbic,bwd.sum$bic[minbic],pch=4,cex=2,col=2)
+```
+## 4
+```{r}
+'The forward selection because it provides the lowest score'
+```
+## 5
+```{r}
+bwd.glm=glm(log(price)~.-sqft_basement+bedrooms:sqft_living+bedrooms:sqft_lot+bedrooms:floors+bedrooms:grade+bedrooms:sqft_above+bedrooms:long+bedrooms:sqft_lot15+bathrooms:sqft_lot+bathrooms:floors+bathrooms:sqft_above+bathrooms:yr_built+bathrooms:long+bathrooms:sqft_lot15+sqft_living:floors+sqft_living:sqft_above+sqft_living:yr_renovated+sqft_living:lat+sqft_living:long+sqft_living:sqft_living15+sqft_living:view+sqft_lot:yr_built+sqft_lot:sqft_lot15+floors:yr_built+floors:lat+condition:grade+condition:yr_built+condition:yr_renovated+condition:sqft_living+grade:long+grade:waterfront+sqft_above:yr_built+sqft_above:lat+yr_built:long+yr_built:sqft_living15+yr_renovated:lat+yr_renovated:view+lat:sqft_lot15+lat:waterfront+long:date+long:view+long:waterfront+view:waterfront, House, family=gaussian)
+bwd.glm$aic
+```
+## 6
+```{r warning=FALSE}
+library(boot)
+set.seed(100)
+cv.err = cv.glm(data=House, glmfit=bwd.glm,K=10)
+exp(cv.err$delta[1])
+
+```
+## 7
+```{r}
+library(glmnet)
+x=model.matrix(log(price)~(.-sqft_basement-zipcode)^2+zipcode, data=House)[,-1]
+y=log(price)
+```
+```{r}
+ridge.mod=glmnet(x, y, alpha=0, lambda=100)
+coef(ridge.mod)
+```
+```{r}
+set.seed(100)
+grid=exp(1)^seq(10,-5,length=100)
+cv.out=cv.glmnet(x,y,lambda=grid,alpha=0)
+plot(cv.out)
+names(cv.out)
+lambda.min=cv.out$lambda.min
+lambda.min
+min.r=which.min(cv.out$cvm)
+cv.out$cvm[min.r]
+
+```
+## 8
+```{r}
+lasso.mod=glmnet(x, y, alpha=1, lambda=100)
+coef(lasso.mod)
+set.seed(100)
+
+cv.out2=cv.glmnet(x,y,lambda=grid,alpha=1)
+plot(cv.out2)
+names(cv.out2)
+lambda.min2=cv.out$lambda.min
+lambda.min2
+min.r=which.min(cv.out2$cvm)
+cv.out2$cvm[min.r]
+```
+## 9
+```{r}
+"The the step wise methods dont seem to prove to any sigfincant combinations as the lowest number you can get is with using all variables"
+```
+## 10
+```{r}
+library(pls)
+set.seed(100)
+pcr.fit=pcr(log(price)~., data=House, scale=T, validation="CV")
+summary(pcr.fit)
+```
+```{r}
+validationplot(pcr.fit, val.type="MSEP", legendpos="topright")
+plot(pcr.fit, plottype="validation", val.type="MSEP", legendpos="topright")
+plot(pcr.fit, plottype="loadings", comps=1:3, legendpos="bottomleft")
+pcr.fit$loadings
+
+
+```
+## 11
+```{r}
+set.seed(100)
+pls.fit=plsr(log(price)~., data=House, scale=T, validation="CV")
+summary(pls.fit)
+validationplot(pls.fit, val.type="MSEP", legendpos="topright")
+plot(pls.fit, plottype="validation", val.type="MSEP", legendpos="topright")
+plot(pls.fit, plottype="loadings", comps=1:4, legendpos="bottomleft")
+pls.fit$loadings
+```

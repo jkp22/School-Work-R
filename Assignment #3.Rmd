@@ -1,0 +1,236 @@
+---
+title: 'Assignment #3'
+author: "Kyle Pinca"
+date: "10/27/2021"
+output: html_document
+
+## Question 1
+```{r}
+Bank = read.csv("bank marketing.csv")
+str(Bank)
+Bank$y=as.factor(Bank$y)
+class(Bank$y)
+attach(Bank)
+```
+
+## Question 2 
+```{r}
+set.seed(10)
+train=sample(nrow(Bank),nrow(Bank)/2)
+
+```
+
+## Question 3
+```{r}
+bank.fit=glm(y~. -duration, data=Bank, subset=train, family=binomial)
+summary(bank.fit)
+```
+"There seems to be alot of predictors that are not statsically signficant, based on their p-value"
+
+## Question 4
+```{r}
+
+bank.prob=predict(bank.fit, newdata=Bank[-train,], type="response")
+```
+
+## Question 5
+```{r}
+bank.pred=ifelse(bank.prob>0.5,"Yes","No")
+```
+## Question 6
+```{r}
+table(bank.pred, y[-train])
+```
+
+## Question 7
+  # Overall Error Rate:
+```{r}
+
+sum(bank.pred!=y[-train])/length(y[-train])
+```
+  # Type I error:
+```{r}
+sum((bank.pred=="Yes")&(y[-train]=="no"))/sum(y[-train]=="no")
+```
+  # Type II error:
+```{r}
+sum((bank.pred=="No")&(y[-train]=="yes"))/sum(y[-train]=="yes")
+```
+
+## Question 8
+```{r}
+bank.pred2=ifelse(bank.prob>0.1,"Yes","No")
+table(bank.pred2,y[-train])
+```
+  # Overall Error Rate:
+```{r}
+sum(bank.pred2!=y[-train])/length(y[-train])
+```
+  # Type I Error:
+```{r}
+sum((bank.pred2=="Yes")&(y[-train]=="no"))/sum(y[-train]=="no")
+```
+  # Type II Error:
+```{r}
+sum((bank.pred2=="No")&(y[-train]=="yes"))/sum(y[-train]=="yes")
+```
+
+## Question 9
+```{r}
+bank.pred3=ifelse(bank.prob>0.05,"Yes","No")
+table(bank.pred3,y[-train])
+```
+
+  # Overall Error Rate:
+```{r}
+
+```
+
+  # Type I Error:
+```{r}
+sum((bank.pred3=="Yes")&(y[-train]=="no"))/sum(y[-train]=="no")
+```
+  # Type II Error:
+```{r}
+sum((bank.pred3=="No")&(y[-train]=="yes"))/sum(y[-train]=="yes")
+```
+
+## Question 10
+  # ROC
+library(ROCR)
+```{r}
+rocplot=function(pred, truth, ...){
+  predob=prediction(pred, truth)
+  perf=performance(predob, "tpr", "fpr")
+  plot(perf,...)}
+
+rocplot(bank.prob, y[-train], col="blue")
+```
+  
+  #AUC
+```{r}
+auc=function(pred, truth){
+  predob=prediction(pred, truth)
+  perf=performance(predob, "auc")
+  return(perf@y.values[[1]])}
+
+auc(bank.prob, y[-train])
+```
+
+## Question 11
+```{r}
+"The model has high error rates due to how far the line is from 1 for true postive"
+```
+
+## Question 12
+library(MASS)
+```{r}
+bank.lda=lda(y~.-duration, data= Bank,subset=train)
+bank.lda.prob=predict(bank.lda, newdata=Bank[-train,], type="response")
+
+
+bank.lda.pred=predict(bank.lda, Bank[-train,])
+names(bank.lda.pred)
+
+bank.pc=ifelse(bank.lda.pred$posterior[,2]>0.5,"Yes","No")
+table(bank.pc, y[-train])
+```
+  # Overall
+```{r}
+
+```
+  # Type I Error:
+```{r}
+sum((bank.pc=="Yes")&(y[-train]=="no"))/sum(y[-train]=="no")
+```
+
+  #Type II Error:
+```{r}
+sum((bank.pc=="No")&(y[-train]=="yes"))/sum(y[-train]=="yes")
+```
+
+## Question 13
+```{r}
+rocplot(bank.lda.pred$posterior[,2], y[-train], col="red")
+legend(x=0.67, y=0.1,legend="LDA",col="red",lwd=1,bty="n")
+auc.lda=auc(bank.lda.pred$posterior[,2], y[-train])
+auc.lda
+legend(x=0.85, y=0.1,legend=round(auc.lda,5),bty="n")
+```
+
+## Question 14
+```{r}
+bank.qda=qda(y~.-duration -loan -default, data= Bank,subset=train)
+bank.qda
+
+bank.qpred=predict(bank.qda, Bank[-train,])
+bank.qpc=ifelse(bank.qpred$posterior[,2]>0.5,"Yes","No")
+table(bank.qpc, y[-train])
+```
+  # Overall
+```{r}
+
+```
+  # Type I Error:
+```{r}
+sum((bank.qpc=="Yes")&(y[-train]=="no"))/sum(y[-train]=="no")
+```
+  # Type II Error:
+```{r}
+sum((bank.qpc=="No")&(y[-train]=="yes"))/sum(y[-train]=="yes")
+```
+
+## Question 15
+```{r}
+rocplot(bank.qpred$posterior[,2], y[-train], col="red")
+legend(x=0.67, y=0.1,legend="LDA",col="red",lwd=1,bty="n")
+auc.lda=auc(bank.qpred$posterior[,2], y[-train])
+auc.lda
+legend(x=0.85, y=0.1,legend=round(auc.lda,5),bty="n")
+```
+
+## Question 16
+library(e1071)
+```{r}
+bank.nb=naiveBayes(y~.-duration, data=Bank, subset=train)
+bank.nb
+
+bank.nb.class=predict(bank.nb, Bank[-train,])
+
+table(bank.nb.class, y[-train])
+
+
+
+```
+  # Overall:
+```{r}
+
+```
+  
+  #Type I  Error
+```{r}
+sum((bank.nb.class=="yes")&(y[-train]=="no"))/sum(y[-train]=="no")
+```
+  
+  #Type II Error
+```{r}
+sum((bank.nb.class=="no")&(y[-train]=="yes"))/sum(y[-train]=="yes")
+```
+  
+  
+  
+## Question 17
+```{r}
+bank.nb.preds=predict(bank.nb, Bank[-train,], type="raw")
+
+rocplot(bank.nb.preds[,2], y[-train], col="brown")
+legend(x=0.67, y=0.31,legend="naiveB",col="brown",lwd=1,bty="n")
+auc.nb=auc(bank.nb.preds[,2], y[-train])
+auc.nb
+legend(x=0.85, y=0.31,legend=round(auc.nb,5),bty="n")
+```
+
+## Question 18
+```{r}
+"It seems that logistic regression is best due to its higher auc"
+```

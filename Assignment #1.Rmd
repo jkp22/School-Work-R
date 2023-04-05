@@ -1,0 +1,142 @@
+---
+title: 'Assignment #1'
+author: "Kyle Pinca"
+date: "10/4/2021"
+output: html_document
+---
+
+# Question 1
+```{r}
+House = read.csv("kc house sales.csv")
+attach(House)
+```
+
+
+# Question 2
+```{r}
+summary(House)
+```
+
+# QUestion 3
+```{r}
+date=as.Date(date, format="%Y%m%d")
+```
+
+
+# Question 4
+```{r}
+view=as.factor(view)
+waterfront=as.factor(waterfront)
+zipcode=as.factor(zipcode)
+```
+
+
+# Question 5
+```{r}
+summary(House)
+```
+
+
+# Question 6
+```{r}
+
+summary(data.frame(date, view, waterfront, zipcode))
+
+'The difference between question 5 and 6 is not only are we specfiying which coluems
+we want to summeraize but also where specfically we are getting it from'
+```
+
+# Question 7
+```{r}
+House=data.frame(House[ , -c(1, 8:9, 16)], date, view, waterfront, zipcode)
+summary(House)
+```
+# Question 8
+```{r}
+unique(zipcode)
+'70'
+
+```
+
+# Question 9
+```{r}
+pairs(House[ , 1:3])
+```
+# Question 10
+```{r}
+table(bedrooms)
+```
+# Question 11
+```{r}
+House[bedrooms>30, ]
+```
+
+# Question 12
+```{r}
+House[15871, 2]=3 
+detach(House)
+attach(House)
+
+```
+# Querstion 13
+```{r}
+pairs(House[ , 1:3])
+'Generlly speaking, the more you increase one variable the higher the others will become'
+```
+# Question 14
+```{r}
+plot(waterfront, price)
+plot(view, price)
+```
+# Question 15
+```{r}
+hist(price)
+hist(price, breaks=30, col=2)
+hist(sqft_living, col="green")
+hist(sqft_lot)
+hist(sqft_lot[sqft_lot<30000], col="gray")
+```
+# Question 16
+```{r}
+par(mfrow=c(2, 2))
+hist(price)
+hist(price, breaks=30, col=2)
+hist(sqft_living, col="green")
+hist(sqft_lot)
+hist(sqft_lot[sqft_lot<30000], col="gray")
+```
+# Question 17
+```{r}
+ranges=sapply(House[ , 1:16], range)
+```
+# Question 18
+```{r}
+ranges
+'Largest amount of bathrooms:' 
+ranges[2,3]
+
+```
+# Question 19
+```{r}
+mansion=rep("No", nrow(House))
+mansion[sqft_living15>5000]="Yes"
+mansion=as.factor(mansion)
+```
+# Question 20
+```{r}
+summary(mansion)
+```
+# Question 21
+```{r}
+plot(mansion,House$price)
+```
+# Question 22
+```{r}
+House.wf=subset(House, waterfront==1)
+mean(House.wf$price)
+```
+# Question 23
+```{r}
+House.old=subset(House,yr_built<=1920)
+dim(House.old)
+```

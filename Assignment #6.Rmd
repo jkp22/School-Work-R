@@ -1,0 +1,198 @@
+---
+title: 'Assignment #6'
+author: "Kyle Pinca"
+date: "11/28/2021"
+output: html_document
+---
+## libary
+```{r}
+library(tree)
+library(randomForest)
+library(gbm)
+
+library(ISLR2)
+library(bartMachine)
+```
+
+## 1
+```{r}
+Bank=read.csv("bank marketing.csv")
+library(dplyr)
+Bank=mutate_if(Bank, is.character, as.factor)
+attach(Bank)
+```
+## 2
+```{r}
+set.seed(10)
+train=sample(nrow(Bank),nrow(Bank)/2)
+bank.tree=tree(y~.-duration,data=Bank,subset=train)
+plot(bank.tree)
+text(bank.tree, cex=0.7)
+bank.tree
+```
+## 3
+```{r}
+set.seed(10)
+control=tree.control(nobs=nrow(Bank)/2, mindev=0.005)
+bank.tree=tree(y~.-duration,data=Bank,subset=train,control = control)
+plot(bank.tree)
+text(bank.tree, cex=0.7)
+
+"There are 6 nodes. It has increased."
+```
+## 4
+```{r}
+set.seed(11)
+cvout=cv.tree(bank.tree)
+names(cvout)
+cvout
+plot(cvout$size,cvout$dev,type="b")
+mindev=which.min(cvout$dev)
+minsize=cvout$size[mindev]
+points(minsize,cvout$dev[mindev],pch=4,cex=2,col=2)
+bank.pruned=prune.tree(bank.tree,best=minsize)
+plot(bank.pruned)
+text(bank.pruned)
+
+"The optimal size is 6"
+```
+## 5
+```{r}
+
+bank.tree.prob=predict(bank.pruned,Bank[-train,])
+bank.tree.pred=ifelse(bank.tree.prob[,2]>.5,"Yes","No")
+bank.tree.pred = as.factor(bank.tree.pred)
+table(bank.tree.pred,Bank$y[-train])
+
+
+```
+## 6
+```{r}
+bank.tree.prob=predict(bank.pruned,Bank[-train,])
+library(ROCR)
+rocplot=function(pred, truth, ...){
+  predob=prediction(pred, truth)
+  perf=performance(predob, "tpr", "fpr")
+  plot(perf,...)}
+
+rocplot(bank.tree.prob[,2],Bank$y[-train], col="blue")
+legend(x=0.65, y=0.1,legend="tree",col="blue",lwd=1, bty="n")
+
+auc=function(pred, truth){
+  predob=prediction(pred, truth)
+  perf=performance(predob, "auc")
+  return(perf@y.values[[1]])}
+auc.tree=auc(bank.tree.prob[,2],Bank$y[-train])
+legend(x=0.85, y=0.1,legend=round(auc.tree,4),bty="n")
+
+
+```
+## 7
+```{r}
+set.seed(300)
+bank.bag=randomForest(Bank$y~.-duration,data=Bank,mtry=13,ntree=500,importance=T)
+bank.bag
+varImpPlot(bank.bag)
+
+```
+## 8
+```{r}
+rocplot(-bank.bag$votes[1:nrow(Bank)],Bank$y, col="blue")
+
+auc.bag=auc(-bank.bag$votes[1:nrow(Bank)],Bank$y)
+
+legend(x=0.85, y=0.18,legend=round(auc.bag,4),bty="n")
+```
+## 9
+```{r}
+set.seed(300)
+bank.rf=randomForest(Bank$y~.-duration,data=Bank,mtry=4,ntree=500,importance=T)
+bank.rf
+varImpPlot(bank.rf)
+```
+
+
+```{r}
+rocplot(-bank.rf$votes[1:nrow(Bank)],Bank$y, col="blue")
+
+auc.bag=auc(-bank.rf$votes[1:nrow(Bank)],Bank$y)
+
+legend(x=0.85, y=0.18,legend=round(auc.bag,4),bty="n")
+```
+## 10
+```{r}
+y01=ifelse(Bank$y=="yes",1,0)
+set.seed(300)
+bank.gbm=gbm(y01~.-duration-y, Bank, distribution="bernoulli", n.trees=7000, interaction.depth=2, shrinkage=0.01, cv.fold=5)
+
+bank.gbm
+```
+
+```{r}
+plot(bank.gbm$cv.error)
+min.tree.gbm = which.min(bank.gbm$cv.error)
+min.tree.gbm
+points(min.tree.gbm,bank.gbm$cv.error[min.tree.gbm],pch=8,col=2,cex=3)
+```
+```{r}
+summary(bank.gbm,n.tress=mindev,las=1)
+```
+
+## 11
+```{r}
+y01.pred=ifelse(bank.gbm$cv.fitted>0,1,0)
+
+c.matrix = table(y01.pred,y01)
+c.matrix
+
+(c.matrix[1,2] + c.matrix[2,1])/ sum(c.matrix)
+```
+## 12
+```{r}
+rocplot(-bank.gbm$cv.fitted[1:nrow(Bank)],Bank$y, col="blue")
+
+auc.bag=auc(-bank.gbm$cv.fitted[1:nrow(Bank)],Bank$y)
+
+legend(x=0.85, y=0.18,legend=round(auc.bag,4),bty="n")
+```
+
+## 14
+```{r}
+House=read.csv("kc house sales.csv")
+House$date=as.Date(House$date,format="%Y%m%d")
+House$view=as.factor(House$view)
+House$waterfront=as.factor(House$waterfront)
+House$zipcode=as.factor(House$zipcode)
+House[15871,3]=3
+```
+## 15
+```{r}
+House$days=as.numeric(House$date-as.Date("2014-05-01"))
+House=House[,-1]
+attach(House)
+```
+## 16
+```{r}
+house.gbm = gbm(log(price)~.,House,distribution="gaussian",n.trees=500,
+                interaction.depth=2, shrinkage=0.01,cv.folds=5)
+```
+## 17
+```{r}
+plot(house.gbm$cv.error)
+min.house.tree = which.min(house.gbm$cv.error)
+min.house.tree
+house.gbm$cv.error[min.house.tree]
+```
+## 18
+```{r}
+```{r}
+```{r}
+```{r}
+
+```
+
+```
+
+```
+
+```

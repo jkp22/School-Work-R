@@ -1,0 +1,103 @@
+---
+title: 'Assignment #2'
+author: "Kyle Pinca"
+date: "10/18/2021"
+output: html_document
+
+# Question 1
+```{r}
+'a.) IV, becasue the output shows that if we obtain a 1 for level our response increases by 35.However, that number'
+'could be reduced if the GPA is not high enough'
+'b.)'
+'c.)'
+```
+
+# Question 2
+```{r}
+House=read.csv("kc house sales.csv")
+House$date=as.Date(House$date,format="%Y%m%d")
+House$view=as.factor(House$view)
+House$waterfront=as.factor(House$waterfront)
+House$zipcode=as.factor(House$zipcode)
+House[15871,3]=3
+attach(House)
+
+House.sm = sample(House$sqft_living <= 1500)
+summary(House.sm)
+```
+# Question 3
+```{r}
+price.lmfit=lm(price~sqft_living)
+summary(price.lmfit)
+```
+# Question 4
+```{r}
+'There is a relationship between price and sqft. The relationship is strong because of how low the p-value is'
+```
+# Question 5
+```{r}
+plot(sqft_living, price)
+abline(price.lmfit)
+```
+# Question 6
+```{r}
+par(mfrow=c(2,2))
+plot(price.lmfit)
+'By looking at residual vs fittied graph we can see that the model is not linear'
+```
+# Question 7
+```{r}
+hist(House$price)
+hist(log(price))
+```
+# Question 8
+```{r}
+log.price.fit=lm(log(price)~sqft_living)
+plot(log.price.fit)
+'The data looks more linear'
+```
+# Question 9
+```{r}
+confint(log.price.fit, level=.95)
+predict(log.price.fit, interval="confidence")
+log.price.pred = predict(log.price.fit, data.frame(sqft_living=c(2000)), interval="confidence")
+p= predict(log.price.fit, data.frame(sqft_living=c(2000)), interval="prediction")
+exp(log.price.pred)
+exp(p)
+```
+# Question 10
+```{r}
+price.lmfit2=lm(log(price)~.,data=House)
+summary(price.lmfit2)
+
+
+```
+# Question 11
+```{r}
+'Because you can if you know sqft_living and sqft_above, you knw sqft_below'
+```
+# Question 12
+```{r}
+price.lmfit3=lm(log(price)~.-sqft_basement, data=House)
+summary(price.lmfit3)
+plot(price.lmfit3)
+```
+# Question 13
+```{r}
+vif(price.lmfit3)
+```
+# Questuion 14
+```{r}
+acf(price.lmfit3$residuals)
+pacf(price.lmfit3$residuals)
+```
+# Question 15
+```{r}
+interaction.fit=lm(log(price)~(. -sqft_basement -zipcode)^2+zipcode, House)
+options(max.print=10000)
+summary(interaction.fit)
+```
+# Question 16
+```{r}
+
+```
